@@ -24,45 +24,52 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({super.key});
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+  List<String> items = [];
+
+  Future<void> _subscribeToItems() async {
+    FireabseMethods.getItems().listen(
+      (event) => setState(() => items = event),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribeToItems();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('To Buy')),
-      body: StreamBuilder(
-        stream: FireabseMethods.getItems(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(child: Text('Something went wrong'));
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          return ReorderableListView(
-            onReorder: (oldIndex, newIndex) {
-              final items = snapshot.data!;
-              final item = items.removeAt(oldIndex);
-              if (newIndex > oldIndex) newIndex--;
-              items.insert(newIndex, item);
-              FireabseMethods.updateItems(items);
-            },
-            children: snapshot.data!
-                .map(
-                  (item) => ListTile(
-                    key: ValueKey(item),
-                    title: Text(item),
-                    leading: IconButton(
-                      icon: const Icon(Icons.circle_outlined),
-                      onPressed: () => FireabseMethods.deleteItem(item),
-                    ),
-                  ),
-                )
-                .toList(),
-          );
+      body: ReorderableListView(
+        onReorder: (oldIndex, newIndex) {
+          final item = items.removeAt(oldIndex);
+          if (newIndex > oldIndex) newIndex--;
+          items.insert(newIndex, item);
+          setState(() {});
+          FireabseMethods.updateItems(items);
         },
+        children: items
+            .map(
+              (item) => ListTile(
+                key: ValueKey(item),
+                title: Text(item),
+                leading: IconButton(
+                  icon: const Icon(Icons.circle_outlined),
+                  onPressed: () => FireabseMethods.deleteItem(item),
+                ),
+              ),
+            )
+            .toList(),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
