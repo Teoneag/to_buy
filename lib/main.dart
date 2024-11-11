@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'fireabse_methods.dart';
 import 'firebase_options.dart';
+import 'models.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,10 +30,12 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    int lastPosition = 0;
+
     return Scaffold(
       appBar: AppBar(title: const Text('To Buy')),
       body: StreamBuilder(
-        stream: FireabseMethods.getTasks(),
+        stream: FireabseMethods.getItems(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(child: Text('Something went wrong'));
@@ -40,14 +43,18 @@ class Home extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          if (snapshot.data!.isNotEmpty) {
+            lastPosition = snapshot.data![snapshot.data!.length - 1].position;
+          }
           return ListView(
             children: snapshot.data!
                 .map(
                   (task) => ListTile(
-                    title: Text(task),
+                    title: Text(task.name),
                     leading: IconButton(
                       icon: const Icon(Icons.circle_outlined),
-                      onPressed: () => FireabseMethods.deleteTask(task),
+                      onPressed: () => FireabseMethods.deleteItem(task.name),
                     ),
                   ),
                 )
@@ -64,7 +71,10 @@ class Home extends StatelessWidget {
               content: TextField(
                 focusNode: FocusNode()..requestFocus(),
                 onSubmitted: (value) {
-                  if (value.isNotEmpty) FireabseMethods.addTask(value);
+                  if (value.isNotEmpty) {
+                    Item item = Item(name: value, position: lastPosition + 1);
+                    FireabseMethods.addItem(item);
+                  }
                   Navigator.pop(context);
                 },
               ),

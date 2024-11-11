@@ -1,28 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class FireabseMethods {
-  static final _tasksRef = FirebaseFirestore.instance.collection('tasks');
+import 'models.dart';
 
-  static Future<void> addTask(String task) async {
-    await _tasksRef.add(<String, dynamic>{
-      'task': task,
-      'created_at': FieldValue.serverTimestamp(),
-    });
+class FireabseMethods {
+  static final _tasksRef = FirebaseFirestore.instance.collection('items');
+
+  static Future<void> addItem(Item item) async {
+    await _tasksRef.add(item.toJson());
   }
 
-  static Future<void> deleteTask(String task) async {
-    final snapshot =
-        await _tasksRef.where('task', isEqualTo: task).limit(1).get();
-    final doc = snapshot.docs.first;
+  static Future<void> deleteItem(String name) async {
+    final snap = await _tasksRef.where('name', isEqualTo: name).limit(1).get();
+    final doc = snap.docs.first;
     await doc.reference.delete();
   }
 
-  static Stream<List<String>> getTasks() {
-    return _tasksRef
-        .orderBy('created_at', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs.map((doc) => doc['task'] as String).toList();
+  static Stream<List<Item>> getItems() {
+    return _tasksRef.orderBy('position').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => Item.fromJson(doc.data())).toList();
     });
   }
 }
