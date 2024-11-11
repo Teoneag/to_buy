@@ -2,7 +2,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'fireabse_methods.dart';
 import 'firebase_options.dart';
-import 'models.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,8 +29,6 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int lastPosition = 0;
-
     return Scaffold(
       appBar: AppBar(title: const Text('To Buy')),
       body: StreamBuilder(
@@ -44,17 +41,22 @@ class Home extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (snapshot.data!.isNotEmpty) {
-            lastPosition = snapshot.data![snapshot.data!.length - 1].position;
-          }
-          return ListView(
+          return ReorderableListView(
+            onReorder: (oldIndex, newIndex) {
+              final items = snapshot.data!;
+              final item = items.removeAt(oldIndex);
+              if (newIndex > oldIndex) newIndex--;
+              items.insert(newIndex, item);
+              FireabseMethods.updateItems(items);
+            },
             children: snapshot.data!
                 .map(
-                  (task) => ListTile(
-                    title: Text(task.name),
+                  (item) => ListTile(
+                    key: ValueKey(item),
+                    title: Text(item),
                     leading: IconButton(
                       icon: const Icon(Icons.circle_outlined),
-                      onPressed: () => FireabseMethods.deleteItem(task.name),
+                      onPressed: () => FireabseMethods.deleteItem(item),
                     ),
                   ),
                 )
@@ -72,8 +74,7 @@ class Home extends StatelessWidget {
                 focusNode: FocusNode()..requestFocus(),
                 onSubmitted: (value) {
                   if (value.isNotEmpty) {
-                    Item item = Item(name: value, position: lastPosition + 1);
-                    FireabseMethods.addItem(item);
+                    FireabseMethods.addItem(value);
                   }
                   Navigator.pop(context);
                 },
