@@ -33,10 +33,14 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   List<String> items = [];
+  bool _isLoading = true;
 
   Future<void> _subscribeToItems() async {
     FireabseMethods.getItems().listen(
-      (event) => setState(() => items = event),
+      (newItems) => setState(() {
+        items = newItems;
+        _isLoading = false;
+      }),
     );
   }
 
@@ -50,27 +54,29 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('To Buy')),
-      body: ReorderableListView(
-        onReorder: (oldIndex, newIndex) {
-          final item = items.removeAt(oldIndex);
-          if (newIndex > oldIndex) newIndex--;
-          items.insert(newIndex, item);
-          setState(() {});
-          FireabseMethods.updateItems(items);
-        },
-        children: items
-            .map(
-              (item) => ListTile(
-                key: ValueKey(item),
-                title: Text(item),
-                leading: IconButton(
-                  icon: const Icon(Icons.circle_outlined),
-                  onPressed: () => FireabseMethods.deleteItem(item),
-                ),
-              ),
-            )
-            .toList(),
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ReorderableListView(
+              onReorder: (oldIndex, newIndex) {
+                final item = items.removeAt(oldIndex);
+                if (newIndex > oldIndex) newIndex--;
+                items.insert(newIndex, item);
+                setState(() {});
+                FireabseMethods.updateItems(items);
+              },
+              children: items
+                  .map(
+                    (item) => ListTile(
+                      key: ValueKey(item),
+                      title: Text(item),
+                      leading: IconButton(
+                        icon: const Icon(Icons.circle_outlined),
+                        onPressed: () => FireabseMethods.deleteItem(item),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           await showDialog(
