@@ -58,6 +58,9 @@ class _HomeState extends State<Home> {
           ? const Center(child: CircularProgressIndicator())
           : ReorderableListView(
               onReorder: (oldIndex, newIndex) {
+                // ToDo fix snapping problem: when dragging an item back to its original position, it goes one place bellow in the animation
+                // if (oldIndex + 1 == newIndex) return;
+                // print("$oldIndex $newIndex");
                 final item = items.removeAt(oldIndex);
                 if (newIndex > oldIndex) newIndex--;
                 items.insert(newIndex, item);
@@ -72,6 +75,10 @@ class _HomeState extends State<Home> {
                       leading: IconButton(
                         icon: const Icon(Icons.circle_outlined),
                         onPressed: () => FireabseMethods.deleteItem(item),
+                      ),
+                      trailing: ReorderableDragStartListener(
+                        index: items.indexOf(item),
+                        child: const Icon(Icons.drag_handle),
                       ),
                     ),
                   )
