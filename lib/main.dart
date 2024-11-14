@@ -87,7 +87,7 @@ class _HomeState extends State<Home> {
                 focusNode: FocusNode()..requestFocus(),
                 onSubmitted: (value) {
                   if (value.isNotEmpty) {
-                    FireabseMethods.addItem(value);
+                    FireabseMethods.addItem(value, items);
                   }
                   Navigator.pop(context);
                 },
